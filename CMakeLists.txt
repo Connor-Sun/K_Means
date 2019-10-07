@@ -3,4 +3,4 @@ project(K_Means)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(K_Means main.cpp data.txt)
+add_executable(K_Means main.cpp data.txt Tuple.cpp Tuple.h Cluster.cpp Cluster.h)

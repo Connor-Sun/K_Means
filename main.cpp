@@ -1,3 +1,5 @@
+//k-means算法实现（此处只考虑成员只有两个属性的情况）
+
 //创建k个点作为起始质心(经常是随机选择)
 //当任意一个点的簇分配结果发生改变时
 //	对数据集中的每个数据点
@@ -6,11 +8,13 @@
 //		将数据点分配到距其最近的簇
 //	对每一个簇，计算簇中所有点的均值并将均值作为质心
 
-/*kmeans算法实现（此处只考虑元组只有两个属性的情况）
-*@File:k_means.cpp
-*@Author:Cai0538
-*@Create:2011-12-10
-*@Last Modified:2011-12-10
+
+
+/*
+ @ Project: K_Means
+ @ File: main.cpp
+ @ Author: Connor
+ @ Create: 2019/10/5
 */
 #include <iostream>
 #include <fstream>
@@ -18,194 +22,44 @@
 #include <math.h>
 #include <cstdlib>
 
+#include "Tuple.h"
+#include "Cluster.h"
+
 #define k 3
 using namespace std;
 
-//存放成员的属性信息
-class Tuple {
+vector<Tuple> getData();
 
-public:
-    Tuple( const int, const int);
+void KMeans(vector<Tuple> tuples);
 
-    double getAttr1();
-    double getAttr2();
-
-private:
-    double attr1;
-    double attr2;
-    unsigned int lable;
-};
-
-Tuple::Tuple(const int attr1, const int attr2) {
-    this -> attr1 = attr1;
-    this -> attr2 = attr2;
-}
-
-double Tuple::getAttr1() {
-    return attr1;
-}
-
-double Tuple::getAttr2() {
-    return attr2;
-}
-
-
-class Cluster : public Tuple {
-
-public:
-    Cluster();
-
-    double getAttr1();
-    double getAttr2();
-
-    void updateAttr(const int, const int);
-
-private:
-    double attr1;
-    double attr2;
-    unsigned int lable;
-};
-
-Cluster::Cluster() {
-    attr1 = rand() % 10;
-    attr2 = rand() % 10;
-}
-
-double Cluster::getAttr1() {
-    return attr1;
-}
-
-double Cluster::getAttr2() {
-    return attr2;
-}
-
-void Cluster::updateAttr(const int attr1, const int attr2) {
-    this -> attr1 = attr1;
-    this -> attr2 = attr2;
-}
 
 //计算两个成员间的欧几里距离
-double getEucliDist(Tuple t1, Tuple t2){
-
-    return sqrt( (t1.getAttr1() - t2.getAttr1()) * (t1.getAttr1() - t2.getAttr1())
-                 + (t1.getAttr2() - t2.getAttr2()) * (t1.getAttr2() - t2.getAttr2()) );
-}
-
-//根据质心，决定当前成员属于哪个簇
-int clusterOfTuple(Cluster means[], Tuple tuple){
-
-    double dist = getEucliDist(means[0], tuple);
-    double temp;
-    int label = 0;  //标示属于哪一个簇
-    for(int i = 1; i < k; i++){
-        temp = getEucliDist(means[i], tuple);
-        if( temp < dist ) {
-            dist = temp;
-            label = i;
-        }
-    }
-    return label;
-}
-
-//获得给定簇集的平方误差
-double getVar(vector<Tuple> clusters[], Tuple means[]){
-
-    double var = 0;
-    for (int i = 0; i < k; i++){
-        vector<Tuple> t = clusters[i];
-        for (int j = 0; j < t.size(); j++){
-            var += getEucliDist(t[j], means[i]);
-        }
-    }
-    //cout<<"sum:"<<sum<<endl;
-    return var;
-}
-
+double getEucliDist(Cluster t1, Tuple t2);
 //获得当前簇的均值（质心）
-Cluster getMeans(vector<Tuple> cluster){
-
-    int num = cluster.size();
-    double xMeans = 0, yMeans = 0;
-    Cluster mean;
-    for (int i = 0; i < num; i++) {
-        xMeans += cluster[i].getAttr1();
-        yMeans += cluster[i].getAttr2();
-    }
-    mean.updateAttr(xMeans / num, yMeans / num);
-    return mean;
-    //cout<<"sum:"<<sum<<endl;
-}
-
-
-void KMeans(vector<Tuple> tuples){
-    vector<Tuple> clusters[k];
-    vector<Cluster> means[k];
-    int i = 0;
-    //默认一开始将前K个成员的值作为k个簇的质心（均值）
-//    for(i = 0; i < k; i++){
-//        means[i]();
-//    }
-    int lable = 0;
-    //根据默认的质心给簇赋值
-    for(i = 0; i != tuples.size(); ++i){
-        lable = clusterOfTuple(means, tuples[i]);
-        clusters[lable].push_back(tuples[i]);
-    }
-    //输出刚开始的簇
-    for(lable = 0; lable < 3; lable++){
-        cout << "第" << lable + 1 << "个簇：" << endl;
-        vector<Tuple> t = clusters[lable];
-        for (i = 0; i < t.size(); i++){
-            cout << "(" << t[i].getAttr1()
-                 << "," << t[i].getAttr2() << ")"
-                 << "   ";
-        }
-        cout << endl;
-    }
-    double oldVar = -1;
-    double newVar=getVar(clusters, means);
-    while(abs( newVar - oldVar ) >= 1) { //当新旧函数值相差不到1即准则函数值不发生明显变化时，算法终止
-
-        for (i = 0; i < k; i++){ //更新每个簇的中心点
-            means[i] = getMeans(clusters[i]);
-            //cout<<"means["<<i<<"]:"<<means[i].attr1<<"  "<<means[i].attr2<<endl;
-        }
-        oldVar = newVar;
-        newVar = getVar(clusters, means); //计算新的准则函数值
-        for (i = 0; i < k; i++){  //清空每个簇
-            clusters[i].clear();
-        }
-        //根据新的质心获得新的簇
-        for(i=0; i != tuples.size(); ++i) {
-            lable = clusterOfTuple(means, tuples[i]);
-            clusters[lable].push_back(tuples[i]);
-        }
-        //输出当前的簇
-        for(lable = 0; lable < 3; lable++) {
-            cout << "第" << lable + 1 << "个簇：" << endl;
-            vector<Tuple> t = clusters[lable];
-            for (i = 0; i< t.size(); i++){
-                cout << "(" << t[i].getAttr1()
-                     << "," << t[i].getAttr2() << ")"
-                     << "   ";
-            }
-            cout << endl;
-        }
-    }
-}
+Tuple getMeans(vector<Tuple> tuples);
+//根据质心，决定当前成员属于哪个簇
+int clusterOfTuple(vector<Cluster> clusterTemp, Tuple tuple);
+//获得给定簇集的平方误差
+double getVar(vector<Tuple> tuplesTemp[3], vector<Cluster> clusterTemp);
 
 
 int main() {
 
+    KMeans( getData() );
+    return 0;
+}
+
+
+vector<Tuple> getData() {
     char fname[256];
-    cout << "请输入存放数据的文件名： ";
-    cin >> fname;
-    cout << endl;
+//    cout << "请输入存放数据的文件名： ";
+//    cin >> fname;
+//    cout << endl;
     ifstream infile;
-    infile.open(fname, ios::in);
+    infile.open("../data.txt", ios::in);
     if(!infile){
-        cout << "不能打开输入的文件" << fname << endl;
-        return 0;
+        cout << "can't open file." << fname << endl;
+        exit(1);
     }
     int count = 0;
     vector<Tuple> tuples;
@@ -229,12 +83,119 @@ int main() {
     //cin>>k;
     //cout<<endl;
 
-    //输出文件中的元组信息
+    //输出文件中的成员信息
     for(vector<Tuple>::size_type ix = 0; ix != tuples.size(); ++ix)
         cout << "(" << tuples[ix].getAttr1() << ","
              << tuples[ix].getAttr2() << ")"
              << "    ";
     cout << endl;
-    KMeans(tuples);
-    return 0;
+
+    return tuples;
 }
+
+void KMeans(vector<Tuple> tuples){
+    vector<Tuple> tuplesTemp[k];
+    vector<Cluster> clusterTemp(3);
+    int i = 0;
+
+    int label = 0;
+
+    cout << "KMeans" << endl;
+
+    double oldVar;
+    double newVar = -1;
+
+    do {
+
+        cout << "while" << endl;
+
+        //根据质心获得新的簇
+        for(i=0; i != tuples.size(); ++i) {
+            label = clusterOfTuple(clusterTemp, tuples[i]);
+            tuplesTemp[label].push_back(tuples[i]);
+        }
+        cout << "\nupdateCluster" << endl;
+        //更新并输出当前的簇
+        for(label = 0; label < 3; label++) {
+            //更新每个簇的中心点
+            clusterTemp[label].updateAttr(getMeans(tuplesTemp[label]).getAttr1(), getMeans(tuplesTemp[label]).getAttr2());
+
+            cout << "cluster " << label + 1 << " (" << clusterTemp[label].getAttr1()
+                 << "," << clusterTemp[label].getAttr2() << ")" << " elements:"
+                 << endl;
+            vector<Tuple> t = tuplesTemp[label];
+            for (i = 0; i< t.size(); i++){
+                cout << "(" << t[i].getAttr1()
+                     << "," << t[i].getAttr2() << ")"
+                     << "   ";
+            }
+            cout << endl;
+        }
+
+        oldVar = newVar;
+        newVar = getVar(tuplesTemp, clusterTemp); //计算新的准则函数值
+        for (i = 0; i < k; i++){  //清空每个簇
+            tuplesTemp[i].clear();
+        }
+    } while(abs( newVar - oldVar ) >= 1); //当新旧函数值相差不到1即准则函数值不发生明显变化时，算法终止
+}
+
+
+//计算两个成员间的欧几里距离
+double getEucliDist(Cluster t1, Tuple t2){
+
+    return sqrt( (t1.getAttr1() - t2.getAttr1()) * (t1.getAttr1() - t2.getAttr1())
+                 + (t1.getAttr2() - t2.getAttr2()) * (t1.getAttr2() - t2.getAttr2()) );
+}
+
+//获得当前簇的均值（质心）
+Tuple getMeans(vector<Tuple> tuples) {
+
+    int num = tuples.size();
+    double xMeans = 0, yMeans = 0;
+
+    for (int i = 0; i < num; i++) {
+        xMeans += tuples[i].getAttr1();
+        yMeans += tuples[i].getAttr2();
+    }
+    Tuple mean(xMeans / num, yMeans / num);
+    return mean;
+    //cout<<"sum:"<<sum<<endl;
+}
+
+//根据质心，决定当前成员属于哪个簇
+int clusterOfTuple(vector<Cluster> clusterTemp, Tuple tuple){
+
+    double dist = getEucliDist(clusterTemp[0], tuple);
+    double temp;
+    int label = 0;  //标示属于哪一个簇
+    for(int i = 1; i < k; i++){
+        temp = getEucliDist(clusterTemp[i], tuple);
+
+        if( temp < dist ) {
+            dist = temp;
+            label = i;
+        }
+    }
+//    cout << "dist = " << dist << endl;
+//    cout << "label = " << label << endl;
+    tuple.updateLabel(label);
+    return label;
+}
+
+//获得给定簇集的平方误差
+double getVar(vector<Tuple> tuplesTemp[3], vector<Cluster> clusterTemp) {
+
+    cout << "getVar" << endl;
+    double var = 0;
+    for (int i = 0; i < k; i++){
+        //vector<Tuple> t = tuplesTemp[i];
+        for (int j = 0; j < tuplesTemp[i].size(); j++){
+            var += getEucliDist(clusterTemp[i], tuplesTemp[i][j]);
+            //cout << "var = " << var << endl;
+        }
+    }
+
+    return var;
+}
+
