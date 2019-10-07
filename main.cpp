@@ -19,8 +19,9 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
+#include <iomanip>
 
 #include "Tuple.h"
 #include "Cluster.h"
@@ -63,8 +64,8 @@ vector<Tuple> getData() {
     }
     int count = 0;
     vector<Tuple> tuples;
-    double a1;
-    double a2;
+    double a1 = 0;
+    double a2 = 0;
     //Tuple temp;
     //从文件流中读入数据
     while(!infile.eof()) {
@@ -78,10 +79,10 @@ vector<Tuple> getData() {
             tuples.push_back( temp );
         }
     }
-    //int k;
-    //cout<<"请输入期望的簇的个数："
-    //cin>>k;
-    //cout<<endl;
+//    int k;
+//    cout<<"请输入期望的簇的个数："
+//    cin>>k;
+//    cout<<endl;
 
     //输出文件中的成员信息
     for(vector<Tuple>::size_type ix = 0; ix != tuples.size(); ++ix)
@@ -106,9 +107,6 @@ void KMeans(vector<Tuple> tuples){
     double newVar = -1;
 
     do {
-
-        cout << "while" << endl;
-
         //根据质心获得新的簇
         for(i=0; i != tuples.size(); ++i) {
             label = clusterOfTuple(clusterTemp, tuples[i]);
@@ -120,9 +118,10 @@ void KMeans(vector<Tuple> tuples){
             //更新每个簇的中心点
             clusterTemp[label].updateAttr(getMeans(tuplesTemp[label]).getAttr1(), getMeans(tuplesTemp[label]).getAttr2());
 
-            cout << "cluster " << label + 1 << " (" << clusterTemp[label].getAttr1()
-                 << "," << clusterTemp[label].getAttr2() << ")" << " elements:"
-                 << endl;
+            cout << "cluster " << label + 1 << " (" << showpoint
+                 << setprecision(2) << clusterTemp[label].getAttr1()<< ","
+                 << setprecision(2) << clusterTemp[label].getAttr2() << ")"
+                 << noshowpoint << " elements:" << endl;
             vector<Tuple> t = tuplesTemp[label];
             for (i = 0; i< t.size(); i++){
                 cout << "(" << t[i].getAttr1()
@@ -186,7 +185,6 @@ int clusterOfTuple(vector<Cluster> clusterTemp, Tuple tuple){
 //获得给定簇集的平方误差
 double getVar(vector<Tuple> tuplesTemp[3], vector<Cluster> clusterTemp) {
 
-    cout << "getVar" << endl;
     double var = 0;
     for (int i = 0; i < k; i++){
         //vector<Tuple> t = tuplesTemp[i];
